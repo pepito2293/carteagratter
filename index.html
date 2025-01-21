@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte à gratter interactive</title>
+    <style>
+        body {
+            font-family: Calibri, Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f8d5e2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .title {
+            font-size: 30px;
+            color: #d32f2f;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 600px;
+            width: 90%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        canvas {
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        .instructions {
+            background-color: #fdd835;
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            text-align: left;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Carte à Gratter Interactive</div>
+
+    <!-- Section pour la carte -->
+    <div class="card-container">
+        <!-- Surface à gratter -->
+        <canvas id="scratchCanvas" width="300" height="300"></canvas>
+
+        <!-- Légende sous la carte -->
+        <div class="instructions" id="instructions">
+            ✈️ x3 = Un voyage <br>
+            🍽️ x3 = Un dîner romantique <br>
+            💆 x3 = Une séance détente <br>
+            🎬 x3 = Une soirée cosy
+        </div>
+    </div>
+
+    <script>
+        const rewards = ["✈️", "🍽️", "💆", "🎬"]; // Les emojis possibles
+        const canvas = document.getElementById("scratchCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let isScratching = false;
+        let symbols = []; // Liste des emojis affichés sous la surface
+
+        // Générer les symboles aléatoires
+        function generateRandomSymbols() {
+            const winningReward = rewards[Math.floor(Math.random() * rewards.length)];
+            const generatedSymbols = [winningReward, winningReward, winningReward]; // Le gagnant x3
+            const otherRewards = rewards.filter((reward) => reward !== winningReward);
+            otherRewards.forEach((reward) => generatedSymbols.push(reward, reward)); // Les autres x2
+            return shuffleArray(generatedSymbols); // Mélanger
+        }
+
+        // Mélanger un tableau
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialiser la carte à gratter
+        function initScratchCanvas() {
+            symbols = generateRandomSymbols();
+
+            // Dessiner les symboles sous la surface
+            renderSymbols();
+
+            // Dessiner la surface à gratter
+            ctx.fillStyle = "#aaaaaa";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Ajouter les événements de grattage
+            canvas.addEventListener("mousedown", startScratching);
+            canvas.addEventListener("mousemove", scratch);
+            canvas.addEventListener("mouseup", stopScratching);
+            canvas.addEventListener("mouseleave", stopScratching);
+            canvas.addEventListener("touchstart", startScratching);
+            canvas.addEventListener("touchmove", scratch);
+            canvas.addEventListener("touchend", stopScratching);
+        }
+
+        // Dessiner les symboles dans la grille sous la surface à gratter
+        function renderSymbols() {
+            const cellSize = canvas.width / 3;
+
+            symbols.forEach((symbol, index) => {
+                const row = Math.floor(index / 3);
+                const col = index % 3;
+                const x = col * cellSize;
+                const y = row * cellSize;
+
+                ctx.save();
+                ctx.font = "24px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#000"; // Couleur des emojis
+                ctx.fillText(symbol, x + cellSize / 2, y + cellSize / 2);
+                ctx.restore();
+            });
+        }
+
+        // Début du grattage
+        function startScratching(e) {
+            isScratching = true;
+            scratch(e);
+        }
+
+        // Arrêter le grattage
+        function stopScratching() {
+            isScratching = false;
+        }
+
+        // Gratter une zone
+        function scratch(e) {
+            if (!isScratching) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+            ctx.globalCompositeOperation = "destination-out";
+            ctx.beginPath();
+            ctx.arc(x, y, 30, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Initialisation
+        initScratchCanvas();
+    </script>
+</body>
+</html>
