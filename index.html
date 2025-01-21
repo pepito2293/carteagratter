@@ -48,6 +48,21 @@
             text-align: left;
             font-weight: bold;
         }
+        .button-container {
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #d32f2f;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #b71c1c;
+        }
     </style>
 </head>
 <body>
@@ -57,6 +72,11 @@
     <div class="card-container">
         <!-- Surface à gratter -->
         <canvas id="scratchCanvas" width="300" height="300"></canvas>
+
+        <!-- Bouton pour gratter automatiquement -->
+        <div class="button-container">
+            <button class="btn" onclick="autoScratch()">Gratter automatiquement</button>
+        </div>
 
         <!-- Légende sous la carte -->
         <div class="instructions" id="instructions">
@@ -157,6 +177,28 @@
             ctx.beginPath();
             ctx.arc(x, y, 30, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        // Grattage automatique
+        function autoScratch() {
+            let step = 0;
+            const interval = setInterval(() => {
+                if (step > 300) {
+                    clearInterval(interval);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Révéler tout
+                    return;
+                }
+
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.beginPath();
+                ctx.arc(x, y, 30, 0, Math.PI * 2);
+                ctx.fill();
+
+                step++;
+            }, 30); // Révélation progressive toutes les 30 ms
         }
 
         // Initialisation
