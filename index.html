@@ -38,6 +38,7 @@
         canvas {
             border-radius: 15px;
             cursor: pointer;
+            position: relative;
         }
         .instructions {
             background-color: #fdd835;
@@ -91,9 +92,11 @@
         const rewards = ["✈️", "🍽️", "💆", "🎬"]; // Les emojis possibles
         const canvas = document.getElementById("scratchCanvas");
         const ctx = canvas.getContext("2d");
+        const cellSize = canvas.width / 3;
 
         let isScratching = false;
         let symbols = []; // Liste des emojis affichés sous la surface
+        const turquoiseColor = "#40E0D0"; // Bleu turquoise
 
         // Générer les symboles aléatoires
         function generateRandomSymbols() {
@@ -117,10 +120,15 @@
         function initScratchCanvas() {
             symbols = generateRandomSymbols();
 
-            // Dessiner les symboles sous la surface
+            // Dessiner le fond bleu turquoise
+            ctx.fillStyle = turquoiseColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Dessiner les symboles sur le fond
             renderSymbols();
 
-            // Dessiner la surface à gratter
+            // Ajouter la surface grise
+            ctx.globalCompositeOperation = "source-over"; // Dessiner par-dessus
             ctx.fillStyle = "#aaaaaa";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -134,10 +142,8 @@
             canvas.addEventListener("touchend", stopScratching);
         }
 
-        // Dessiner les symboles dans la grille sous la surface à gratter
+        // Dessiner les symboles dans la grille sur le fond turquoise
         function renderSymbols() {
-            const cellSize = canvas.width / 3;
-
             symbols.forEach((symbol, index) => {
                 const row = Math.floor(index / 3);
                 const col = index % 3;
