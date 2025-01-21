@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte à gratter interactive</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: Calibri, Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f8d5e2;
+        }
+        .title {
+            font-size: 50px;
+            color: #d32f2f;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .layout {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+        }
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .card {
+            width: 400px;
+            height: 400px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .scratch-card {
+            width: 100px;
+            height: 100px;
+            background-color: gold;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .scratch-card:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        .scratch-card .content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #fff;
+            z-index: 1;
+        }
+        .scratch-card .hidden {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: gold;
+            z-index: 2;
+        }
+        .instructions {
+            background-color: #fdd835;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: left;
+            width: 250px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #d32f2f;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #b71c1c;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">PIMENTONS NOTRE VIE XXX</div>
+    <div class="layout">
+        <div class="card-container">
+            <div id="cardContainer" class="card">
+                <div id="grid" class="grid"></div>
+            </div>
+            <div class="buttons">
+                <button onclick="generateShareableLink()">Générer un lien</button>
+                <button onclick="downloadCard()">Télécharger la carte</button>
+            </div>
+        </div>
+        <div class="instructions">
+            <p>✈️ x3 = UN VOYAGE</p>
+            <p>🍽️ x3 = UN RESTO</p>
+            <p>💆 x3 = UN MASSAGE</p>
+            <p>🎬 x3 = UNE SOIRÉE NETFLIX & CHILL</p>
+        </div>
+    </div>
+
+    <script>
+        const rewards = ["✈️", "🍽️", "💆", "🎬"]; // Les smileys possibles
+
+        function generateRandomRewards() {
+            const grid = document.getElementById("grid");
+            grid.innerHTML = ""; // Réinitialise la grille
+
+            // Vérifier si une carte est déjà définie dans l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const fixedRewards = urlParams.get("rewards");
+
+            let rewardPool;
+
+            if (fixedRewards) {
+                // Charger une carte existante
+                rewardPool = decodeURIComponent(fixedRewards).split("");
+                if (!validateRewards(rewardPool)) {
+                    alert("Carte invalide, une nouvelle carte sera générée.");
+                    rewardPool = createRandomRewardPool();
+                }
+            } else {
+                // Générer une nouvelle carte
+                rewardPool = createRandomRewardPool();
+            }
+
+            // Créer les cases avec les récompenses
+            rewardPool.forEach((reward) => {
+                const scratchCard = document.createElement("div");
+                scratchCard.classList.add("scratch-card");
+                scratchCard.innerHTML = `
+                    <div class="hidden"></div>
+                    <div class="content">${reward}</div>
+                `;
+                scratchCard.addEventListener("click", () => scratchCardReveal(scratchCard));
+                grid.appendChild(scratchCard);
+            });
+        }
+
+        function createRandomRewardPool() {
+            const winningReward = rewards[Math.floor(Math.random() * rewards.length)];
+            const rewardPool = [winningReward, winningReward, winningReward]; // Le gagnant x3
+            const otherRewards = rewards.filter((reward) => reward !== winningReward);
+            otherRewards.forEach((reward) => {
+                rewardPool.push(reward, reward); // Chaque autre smiley x2
+            });
+            return shuffleArray(rewardPool); // Mélanger
+        }
+
+        function validateRewards(rewardPool) {
+            if (rewardPool.length !== 9) return false;
+            const counts = {};
+            rewards.forEach((reward) => {
+                counts[reward] = rewardPool.filter((r) => r === reward).length;
+            });
+            return Object.values(counts).includes(3) && Math.max(...Object.values(counts)) === 3;
+        }
+
+        function generateShareableLink() {
+            const grid = document.getElementById("grid");
+            const rewards = Array.from(grid.children).map((card) => card.querySelector(".content").textContent);
+            const encodedRewards = encodeURIComponent(rewards.join(""));
+            const shareableUrl = `${window.location.origin}${window.location.pathname}?rewards=${encodedRewards}`;
+            prompt("Voici le lien pour partager cette carte :", shareableUrl);
+        }
+
+        // Fonction pour mélanger un tableau
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function scratchCardReveal(card) {
+            const hiddenLayer = card.querySelector(".hidden");
+            hiddenLayer.style.transition = "opacity 0.5s";
+            hiddenLayer.style.opacity = 0;
+            setTimeout(() => hiddenLayer.remove(), 500);
+        }
+
+        function downloadCard() {
+            const cardContainer = document.getElementById("cardContainer");
+            html2canvas(cardContainer).then((canvas) => {
+                const link = document.createElement("a");
+                link.download = "carte-a-gratter.png";
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }
+
+        // Générer une nouvelle combinaison au chargement de la page
+        window.onload = generateRandomRewards;
+    </script>
+</body>
+</html>
